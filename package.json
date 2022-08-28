@@ -1,0 +1,23 @@
+{
+    "name": "djs-v14-handler",
+    "version": "1.0.0",
+    "description": "Command handler for discord.js v14 subcommands and subcommand groups",
+    "main": "index.js",
+    "scripts": {},
+    "author": "Sai Teja M",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/saiteja-madha/djs-v14-handler.git"
+    },
+    "bugs": {
+        "url": "https://github.com/saiteja-madha/djs-v14-handler/issues"
+    },
+    "homepage": "https://github.com/saiteja-madha/djs-v14-handler#readme",
+    "keywords": [
+        "command-handler",
+        "discord.js",
+        "discord.js-v14",
+        "subcommand-handler"
+    ]
+}
