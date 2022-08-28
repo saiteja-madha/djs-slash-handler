@@ -13,14 +13,20 @@ class CommandHandler {
 
     /**
      * @param {CommandHandlerOptions} options
+     * @param {boolean} [load] - load commands
      */
-    constructor(options) {
+    constructor(options, load = true) {
         this.constructor.validateOptions(options);
+        /**
+         * @private
+         */
         this.options = options;
         /**
          * @type {Map<string, Command>}
+         * @private
          */
         this.commands = new Map();
+        if (load) this.loadCommands();
     }
 
     /**
@@ -124,7 +130,7 @@ class CommandHandler {
         return toRegister;
     }
 
-    getCallBack(interaction) {
+    getCommandCallBack(interaction) {
         const commandName = interaction.commandName;
         const command = this.commands.get(commandName);
 
@@ -139,6 +145,11 @@ class CommandHandler {
         } else {
             return command.subCommands.find((x) => x.name === subCommand).callback;
         }
+    }
+
+    async handleInteraction(interaction) {
+        const fn = this.getCommandCallBack(interaction);
+        await fn(interaction);
     }
 
     /**
