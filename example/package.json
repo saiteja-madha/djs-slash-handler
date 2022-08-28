@@ -1,0 +1,14 @@
+{
+    "name": "sample-bot",
+    "version": "1.0.0",
+    "description": "A sample bot to test djs-v14-handler",
+    "main": "bot.js",
+    "scripts": {
+        "start": "node ."
+    },
+    "author": "Sai Teja M",
+    "license": "ISC",
+    "dependencies": {
+        "discord.js": "^14.3.0"
+    }
+}
