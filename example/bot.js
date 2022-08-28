@@ -1,5 +1,5 @@
 const Discord = require("discord.js");
-const CommandHandler = require("djs-v14-handler");
+const CommandHandler = require("djs-slash-handler");
 
 // initialize discord client
 const client = new Discord.Client({
