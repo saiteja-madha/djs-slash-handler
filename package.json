@@ -2,7 +2,7 @@
     "name": "djs-v14-handler",
     "version": "1.0.0",
     "description": "Command handler for discord.js v14 subcommands and subcommand groups",
-    "main": "index.js",
+    "main": "src/index.js",
     "scripts": {},
     "author": "Sai Teja M",
     "license": "MIT",
