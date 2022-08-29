@@ -43,4 +43,4 @@ Refer to the [discord developer documentation](https://discord.com/developers/do
 -   This is a quick & dirty implementation of the command handler
 -   Additional features/documentation will be added in the future
 -   Feel free to contribute to this project and open an issue if you find any bugs
--   For more information on how to use the command handler, join us on discord [here](https://discord.gg/2Z8qZ9Z)
+-   For more information on how to use the command handler, join us on discord [here](https://discord.gg/BZFH4RSf2u)
