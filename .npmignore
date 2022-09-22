@@ -1,0 +1,10 @@
+# Folders
+node_modules
+example
+src
+.vscode
+
+# Files
+.gitattributes
+.gitignore
+tsconfig.json

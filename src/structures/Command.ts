@@ -1,15 +1,23 @@
-const SubCommand = require("./SubCommand");
-const SubCommandGroup = require("./SubCommandGroup");
+import { ApplicationCommandOptionData, ChatInputCommandInteraction } from "discord.js";
+import SubCommand from "./SubCommand";
+import SubCommandGroup from "./SubCommandGroup";
 
-module.exports = class Command {
-    /**
-     * @param {string} name
-     * @param {object} data
-     * @param {SubCommand[]} [subCommands]
-     * @param {SubCommandGroup[]} [subCommandGroups]
-     */
-    constructor(name, data, subCommands = [], subCommandGroups = []) {
-        this.constructor.validate(name, subCommands.length || subCommandGroups.length, data);
+export type CommandData = {
+    description: string;
+    options: ApplicationCommandOptionData[];
+    callback?: (interaction: ChatInputCommandInteraction) => any;
+};
+
+export default class Command {
+    name: string;
+    description: string;
+    options: ApplicationCommandOptionData[];
+    subCommands: SubCommand[];
+    subCommandGroups: SubCommandGroup[];
+    callback?: (interaction: ChatInputCommandInteraction) => any;
+
+    constructor(name: string, data: CommandData, subCommands: SubCommand[], subCommandGroups: SubCommandGroup[]) {
+        Command.validate(name, (subCommands.length || subCommandGroups.length) > 0, data);
         this.name = name;
         this.description = data.description;
         this.options = data.options || [];
@@ -32,13 +40,8 @@ module.exports = class Command {
         };
     }
 
-    /**
-     * @param {string} name
-     * @param {boolean} containsSubCommand
-     * @param {object} data
-     */
-    static validate(name, containsSubCommand, data) {
+    static validate(name: string, containsSubCommand: boolean, data: CommandData) {
         if (typeof data.description !== "string") throw new TypeError(`Command description must be a string: ${name}`);
         if (!containsSubCommand && typeof data.callback !== "function") throw new TypeError(`Command callback must be a function: ${name}`);
     }
-};
+}

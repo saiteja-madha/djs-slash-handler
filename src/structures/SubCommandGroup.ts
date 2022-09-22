@@ -1,12 +1,11 @@
-const SubCommand = require("./SubCommand");
+import SubCommand from "./SubCommand";
 
-module.exports = class SubCommandGroup {
-    /**
-     * @param {string} name
-     * @param {string} description
-     * @param {SubCommand[]} subCommands
-     */
-    constructor(name, description, subCommands = []) {
+export default class SubCommandGroup {
+    name: string;
+    description: string;
+    subCommands: SubCommand[];
+
+    constructor(name: string, description: string, subCommands: SubCommand[]) {
         this.name = name;
         this.description = description;
         this.subCommands = subCommands;
@@ -20,4 +19,4 @@ module.exports = class SubCommandGroup {
             options: [...this.subCommands.map((subCommand) => subCommand.json)],
         };
     }
-};
+}

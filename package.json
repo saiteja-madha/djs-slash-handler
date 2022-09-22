@@ -1,9 +1,12 @@
 {
     "name": "djs-slash-handler",
-    "version": "1.0.1",
+    "version": "1.1.0",
     "description": "Command handler for discord.js v14 subcommands and subcommand groups",
-    "main": "src/index.js",
-    "scripts": {},
+    "main": "dist/index.js",
+    "typings": "typings",
+    "scripts": {
+        "build": "tsc"
+    },
     "author": "Sai Teja M",
     "license": "MIT",
     "repository": {
@@ -14,6 +17,12 @@
         "url": "https://github.com/saiteja-madha/djs-slash-handler/issues"
     },
     "homepage": "https://github.com/saiteja-madha/djs-slash-handler#readme",
+    "devDependencies": {
+        "typescript": "^4.8.3"
+    },
+    "peerDependencies": {
+        "discord.js": "^14.0.0"
+    },
     "keywords": [
         "command-handler",
         "discord.js",
