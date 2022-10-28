@@ -1,9 +1,14 @@
-module.exports = {
-    enabled: true,
-    description: "description for cmd1",
-    options: [],
+const { Command } = require("djs-slash-handler");
 
-    async callback(interaction, data) {
+module.exports = new Command({
+    name: "cmd1",
+    description: "description for cmd1",
+
+    async onPrefixCommand(message, args) {
+        message.reply("Response for cmd1");
+    },
+
+    async onSlashCommand(interaction) {
         await interaction.reply("Response for cmd1");
     },
-};
+});

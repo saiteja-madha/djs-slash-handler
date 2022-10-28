@@ -3,7 +3,7 @@ const { CommandHandler } = require("djs-slash-handler");
 
 // initialize discord client
 const client = new Discord.Client({
-    intents: ["Guilds"],
+    intents: ["Guilds", "GuildMessages", "MessageContent"],
 });
 
 // initialize the command handler
@@ -27,5 +27,10 @@ client.login("YOUR_BOT_TOKEN").then(() => {
             // handle interaction
             cmdHandler.handleInteraction(interaction);
         }
+    });
+
+    client.on("messageCreate", (message) => {
+        // handle message
+        cmdHandler.handleMessage(message, "!");
     });
 });

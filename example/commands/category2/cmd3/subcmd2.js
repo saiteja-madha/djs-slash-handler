@@ -1,9 +1,14 @@
-module.exports = {
-    enabled: true,
-    description: "description for cmd3 > subcmd1",
-    options: [],
+const { SubCommand } = require("djs-slash-handler");
 
-    async callback(interaction) {
-        await interaction.reply("Response for cmd3 > subcmd1");
+module.exports = new SubCommand({
+    name: "subcmd2",
+    description: "description for cmd3 > subcmd2",
+
+    async onPrefixCommand(message, args) {
+        message.reply("Response for cmd3 > subcmd2");
     },
-};
+
+    async onSlashCommand(interaction) {
+        await interaction.reply("Response for cmd3 > subcmd2");
+    },
+});
