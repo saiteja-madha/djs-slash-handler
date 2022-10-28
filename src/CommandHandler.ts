@@ -1,9 +1,9 @@
 import fs from "fs";
 import path from "path";
-import Command from "./Command";
-import SubCommand from "./SubCommand";
-import SubCommandGroup from "./SubCommandGroup";
-import { ChatInputCommandInteraction } from "discord.js";
+import Command from "./structures/Command";
+import SubCommand from "./structures/SubCommand";
+import SubCommandGroup from "./structures/SubCommandGroup";
+import { ChatInputCommandInteraction, Message } from "discord.js";
 
 type CommandHandlerOptions = {
     commandsDir: string;
@@ -14,7 +14,7 @@ class CommandHandler {
     private options: CommandHandlerOptions;
     commands: Map<string, Command>;
 
-    constructor(options: CommandHandlerOptions, load: boolean) {
+    constructor(options: CommandHandlerOptions, load: boolean = true) {
         CommandHandler.validateOptions(options);
         this.options = options;
         this.commands = new Map();
@@ -38,25 +38,25 @@ class CommandHandler {
                 if (!stat.isDirectory()) {
                     let cmdObj = require(path.join(process.cwd(), this.options.commandsDir, category, categoryCommand));
                     if (cmdObj.default) cmdObj = cmdObj.default;
-                    if (cmdObj?.enabled === false) continue;
-                    const fileName = categoryCommand.split(".")[0];
-                    const command = new Command(fileName, cmdObj, [], []);
-                    this.commands.set(fileName, command);
+                    if (!(cmdObj instanceof Command)) continue;
+                    this.commands.set(cmdObj.name, cmdObj);
                 }
 
                 // command with subcommands/subcommand-groups
                 else {
-                    let _defaultCmdData;
+                    let cmdObj;
                     try {
-                        _defaultCmdData = require(path.join(process.cwd(), this.options.commandsDir, category, categoryCommand, "index.js"));
+                        cmdObj = require(path.join(process.cwd(), this.options.commandsDir, category, categoryCommand, "index.js"));
+                        if (cmdObj.default) cmdObj = cmdObj.default;
+                        if (!(cmdObj instanceof Command)) continue;
                     } catch (err) {
                         // default command metadata
-                        _defaultCmdData = {
-                            enabled: true,
+                        cmdObj = new Command({
+                            name: categoryCommand,
                             description: `description for ${categoryCommand}`,
-                            aliases: [],
-                            ephemeral: false,
-                        };
+                            prefixData: {},
+                            slashData: {},
+                        });
                     }
 
                     const subFolders = fs.readdirSync(path.join(process.cwd(), this.options.commandsDir, category, categoryCommand));
@@ -69,10 +69,10 @@ class CommandHandler {
 
                         // only subcommands
                         if (!stat.isDirectory() && sub != "index.js") {
-                            const subCmdObj = require(path.join(process.cwd(), this.options.commandsDir, category, categoryCommand, sub));
-                            if (subCmdObj?.enabled === false) continue;
-                            const fileName = sub.split(".")[0];
-                            subCommandsArray.push(new SubCommand(fileName, subCmdObj));
+                            let subCmdObj = require(path.join(process.cwd(), this.options.commandsDir, category, categoryCommand, sub));
+                            if (subCmdObj.default) subCmdObj = subCmdObj.default;
+                            if (!(subCmdObj instanceof SubCommand)) continue;
+                            subCommandsArray.push(subCmdObj);
                         }
 
                         // subcommand-groups
@@ -100,7 +100,7 @@ class CommandHandler {
                             }
 
                             for (const subCommand of subcommandGroup) {
-                                const subCmdObj = require(path.join(
+                                let subCmdObj = require(path.join(
                                     process.cwd(),
                                     this.options.commandsDir,
                                     category,
@@ -108,16 +108,16 @@ class CommandHandler {
                                     sub,
                                     subCommand
                                 ));
-                                if (subCmdObj?.enabled === false) continue;
-                                const fileName = subCommand.split(".")[0];
-                                innerSubCommandsArray.push(new SubCommand(fileName, subCmdObj));
+                                if (subCmdObj.default) subCmdObj = subCmdObj.default;
+                                if (!(subCmdObj instanceof SubCommand)) continue;
+                                innerSubCommandsArray.push(new SubCommand(subCmdObj));
                             }
 
                             subCommandGroupsArray.push(new SubCommandGroup(sub, _defaultCmdGroupData.description, innerSubCommandsArray));
                         }
                     }
 
-                    const cmdObj = new Command(categoryCommand, _defaultCmdData, subCommandsArray, subCommandGroupsArray);
+                    cmdObj.addSubCommands(subCommandsArray).addSubCommandGroups(subCommandGroupsArray);
                     this.commands.set(categoryCommand, cmdObj);
                 }
             }
@@ -132,27 +132,65 @@ class CommandHandler {
         return toRegister;
     }
 
-    getCommandCallBack(interaction: ChatInputCommandInteraction) {
+    getSlashCommandCallback(interaction: ChatInputCommandInteraction) {
         const commandName = interaction.commandName;
         const command = this.commands.get(commandName);
 
-        if (!command) return console.log("Command not found");
-        if (command.subCommands.length === 0 && command.subCommandGroups.length === 0) return command.callback;
+        if (!command) return;
+        if (command.subCommands.length === 0 && command.subCommandGroups.length === 0) return command.onSlashCommand;
 
         const subCommandGroup = interaction.options.getSubcommandGroup();
         const subCommand = interaction.options.getSubcommand();
 
         if (subCommandGroup) {
-            return command.subCommandGroups.find((x) => x.name === subCommandGroup)?.subCommands.find((x) => x.name === subCommand)?.callback;
+            return command.subCommandGroups.find((x) => x.name === subCommandGroup)?.subCommands.find((x) => x.name === subCommand)?.onSlashCommand;
         } else {
-            return command.subCommands.find((x) => x.name === subCommand)?.callback;
+            return command.subCommands.find((x) => x.name === subCommand)?.onSlashCommand;
+        }
+    }
+
+    getPrefixCommandCallBack(message: Message, prefix: string) {
+        const args = message.content.slice(prefix.length).trim().split(/ +/g);
+        const commandName = args.shift()?.toLowerCase();
+        if (!commandName) return;
+
+        const command = this.commands.get(commandName);
+        if (!command) return;
+
+        let callback;
+
+        if (command.subCommands.length === 0 && command.subCommandGroups.length === 0) return { callback: command.onPrefixCommand, args };
+        const arg0 = args.shift();
+        if (arg0) {
+            const subCmd = command.subCommands.find((x) => x.name === arg0);
+            if (subCmd) {
+                callback = subCmd.onPrefixCommand;
+            } else {
+                const arg1 = args.shift();
+                if (arg1) {
+                    const subCmdGroup = command.subCommandGroups.find((x) => x.name === arg0);
+                    if (subCmdGroup) {
+                        const subCmd = subCmdGroup.subCommands.find((x) => x.name === arg1);
+                        if (subCmd) callback = subCmd.onPrefixCommand;
+                    }
+                }
+            }
+        }
+
+        if (callback) {
+            return { callback, args };
         }
     }
 
     async handleInteraction(interaction: ChatInputCommandInteraction) {
-        const fn = this.getCommandCallBack(interaction);
-        if (!fn) return console.log("Command not found");
-        await fn(interaction);
+        const fn = this.getSlashCommandCallback(interaction);
+        if (fn) await fn(interaction);
+    }
+
+    async handleMessage(message: Message, prefix: string) {
+        if (message.author.bot || !message.content.startsWith(prefix)) return;
+        const res = this.getPrefixCommandCallBack(message, prefix);
+        if (res) await res.callback(message, res.args);
     }
 
     static validateOptions(options: CommandHandlerOptions) {
@@ -166,4 +204,3 @@ class CommandHandler {
 }
 
 export default CommandHandler;
-export { Command, SubCommand, SubCommandGroup };

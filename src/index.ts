@@ -1,6 +1,6 @@
-import CommandHandler from "./structures/CommandHandler";
-import { CommandData } from "./structures/Command";
-import { SubCommandData } from "./structures/SubCommand";
+import CommandHandler from "./CommandHandler";
+import Command from "./structures/Command";
+import SubCommand from "./structures/SubCommand";
 
 export default CommandHandler;
-export { CommandHandler, CommandData, SubCommandData };
+export { CommandHandler, Command, SubCommand };

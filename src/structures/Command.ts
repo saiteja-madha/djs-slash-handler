@@ -1,29 +1,55 @@
-import { ApplicationCommandOptionData, ChatInputCommandInteraction } from "discord.js";
+import { ApplicationCommandOptionData, ChatInputCommandInteraction, Message } from "discord.js";
 import SubCommand from "./SubCommand";
 import SubCommandGroup from "./SubCommandGroup";
 
-export type CommandData = {
-    description: string;
-    options: ApplicationCommandOptionData[];
-    callback?: (interaction: ChatInputCommandInteraction) => any;
+type PrefixCommandData = {
+    enabled?: boolean;
+    aliases?: string[];
+    usage?: string;
+    minArgsCount?: number;
 };
+
+type SlashCommandData = {
+    enabled?: boolean;
+    options?: ApplicationCommandOptionData[];
+};
+
+export interface CommandData {
+    name: string;
+    description: string;
+    prefixData?: PrefixCommandData;
+    slashData?: SlashCommandData;
+    onPrefixCommand?: (message: Message, args: string[]) => any;
+    onSlashCommand?: (interaction: ChatInputCommandInteraction) => any;
+}
 
 export default class Command {
     name: string;
     description: string;
-    options: ApplicationCommandOptionData[];
-    subCommands: SubCommand[];
-    subCommandGroups: SubCommandGroup[];
-    callback?: (interaction: ChatInputCommandInteraction) => any;
+    prefixData: PrefixCommandData;
+    slashData: SlashCommandData;
+    onPrefixCommand: (message: Message, args: string[]) => any;
+    onSlashCommand: (interaction: ChatInputCommandInteraction) => any;
 
-    constructor(name: string, data: CommandData, subCommands: SubCommand[], subCommandGroups: SubCommandGroup[]) {
-        Command.validate(name, (subCommands.length || subCommandGroups.length) > 0, data);
-        this.name = name;
+    subCommands: SubCommand[] = [];
+    subCommandGroups: SubCommandGroup[] = [];
+
+    constructor(data: CommandData) {
+        Command.validate(data.name, data);
+        this.name = data.name;
         this.description = data.description;
-        this.options = data.options || [];
-        this.subCommands = subCommands;
-        this.subCommandGroups = subCommandGroups;
-        this.callback = data.callback;
+        this.prefixData = {
+            enabled: data.prefixData?.enabled === undefined ? true : data.prefixData.enabled,
+            aliases: data.prefixData?.aliases || [],
+            usage: data.prefixData?.usage || "",
+            minArgsCount: data.prefixData?.minArgsCount || 0,
+        };
+        this.slashData = {
+            enabled: data.slashData?.enabled === undefined ? true : data.prefixData?.enabled,
+            options: data.slashData?.options || [],
+        };
+        this.onPrefixCommand = data.onPrefixCommand || (() => {});
+        this.onSlashCommand = data.onSlashCommand || (() => {});
     }
 
     get json() {
@@ -31,17 +57,26 @@ export default class Command {
             name: this.name,
             description: this.description,
             options:
-                this.subCommands.length == 0 && this.subCommandGroups.length == 0
-                    ? this.options
+                this.subCommands?.length == 0 && this.subCommandGroups?.length == 0
+                    ? this.slashData.options
                     : [
-                          ...this.subCommands.map((subCommand) => subCommand.json),
-                          ...this.subCommandGroups.map((subCommandGroup) => subCommandGroup.json),
+                          ...(this.subCommands?.map((subCommand) => subCommand.json) || []),
+                          ...(this.subCommandGroups?.map((subCommandGroup) => subCommandGroup.json) || []),
                       ],
         };
     }
 
-    static validate(name: string, containsSubCommand: boolean, data: CommandData) {
+    addSubCommands(subCommands: SubCommand[]) {
+        this.subCommands = subCommands;
+        return this;
+    }
+
+    addSubCommandGroups(subCommandGroups: SubCommandGroup[]) {
+        this.subCommandGroups = subCommandGroups;
+        return this;
+    }
+
+    static validate(name: string, data: CommandData) {
         if (typeof data.description !== "string") throw new TypeError(`Command description must be a string: ${name}`);
-        if (!containsSubCommand && typeof data.callback !== "function") throw new TypeError(`Command callback must be a function: ${name}`);
     }
 }
