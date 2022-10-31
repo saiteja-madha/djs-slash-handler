@@ -15,7 +15,7 @@ class CommandHandler {
     commands: Map<string, Command>;
 
     constructor(options: CommandHandlerOptions, load: boolean = true) {
-        CommandHandler.validateOptions(options);
+        CommandHandler._validateOptions(options);
         this.options = options;
         this.commands = new Map();
         if (load) this.loadCommands();
@@ -159,19 +159,22 @@ class CommandHandler {
 
         let callback;
 
-        if (command.subCommands.length === 0 && command.subCommandGroups.length === 0) return { callback: command.onPrefixCommand, args };
-        const arg0 = args.shift();
-        if (arg0) {
-            const subCmd = command.subCommands.find((x) => x.name === arg0);
-            if (subCmd) {
-                callback = subCmd.onPrefixCommand;
-            } else {
-                const arg1 = args.shift();
-                if (arg1) {
-                    const subCmdGroup = command.subCommandGroups.find((x) => x.name === arg0);
-                    if (subCmdGroup) {
-                        const subCmd = subCmdGroup.subCommands.find((x) => x.name === arg1);
-                        if (subCmd) callback = subCmd.onPrefixCommand;
+        if (command.subCommands.length === 0 && command.subCommandGroups.length === 0) {
+            callback = command.onPrefixCommand;
+        } else {
+            const arg0 = args.shift();
+            if (arg0) {
+                const subCmd = command.subCommands.find((x) => x.name === arg0);
+                if (subCmd) {
+                    callback = subCmd.onPrefixCommand;
+                } else {
+                    const arg1 = args.shift();
+                    if (arg1) {
+                        const subCmdGroup = command.subCommandGroups.find((x) => x.name === arg0);
+                        if (subCmdGroup) {
+                            const subCmd = subCmdGroup.subCommands.find((x) => x.name === arg1);
+                            if (subCmd) callback = subCmd.onPrefixCommand;
+                        }
                     }
                 }
             }
@@ -193,7 +196,7 @@ class CommandHandler {
         if (res) await res.callback(message, res.args);
     }
 
-    static validateOptions(options: CommandHandlerOptions) {
+    private static _validateOptions(options: CommandHandlerOptions) {
         if (!options) throw new Error("No options provided");
         if (!options.commandsDir) throw new Error("No path for commands provided");
         if (options.disabledCategories) {
