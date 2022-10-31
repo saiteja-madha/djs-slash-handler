@@ -35,7 +35,7 @@ export default class Command {
     subCommandGroups: SubCommandGroup[] = [];
 
     constructor(data: CommandData) {
-        Command.validate(data.name, data);
+        Command._validate(data);
         this.name = data.name;
         this.description = data.description;
         this.prefixData = {
@@ -76,7 +76,51 @@ export default class Command {
         return this;
     }
 
-    static validate(name: string, data: CommandData) {
+    private static _validate(data: CommandData) {
+        if (typeof data.name !== "string") throw new TypeError("Command name must be a string.");
+        const { name } = data;
         if (typeof data.description !== "string") throw new TypeError(`Command description must be a string: ${name}`);
+
+        // validate prefixData
+        if (data.prefixData) {
+            if (typeof data.prefixData !== "object") {
+                throw new TypeError(`Command - prefixData must be an object: ${name}`);
+            }
+            if (data.prefixData.enabled && typeof data.prefixData.enabled !== "boolean") {
+                throw new TypeError(`Command - prefixData.enabled must be a boolean: ${name}`);
+            }
+            if (data.prefixData.aliases && !Array.isArray(data.prefixData.aliases)) {
+                throw new TypeError(`Command - prefixData.aliases must be an array: ${name}`);
+            }
+            if (data.prefixData.usage && typeof data.prefixData.usage !== "string") {
+                throw new TypeError(`Command - prefixData.usage must be a string: ${name}`);
+            }
+            if (data.prefixData.minArgsCount && typeof data.prefixData.minArgsCount !== "number") {
+                throw new TypeError(`Command - prefixData.minArgsCount must be a number: ${name}`);
+            }
+            if (typeof data.prefixData.enabled === "undefined" || data.prefixData.enabled) {
+                if (typeof data.onPrefixCommand !== "function") {
+                    throw new TypeError(`SubCommand - onPrefixCommand must be a function: ${name}`);
+                }
+            }
+        }
+
+        // validate slashData
+        if (data.slashData) {
+            if (typeof data.slashData !== "object") {
+                throw new TypeError(`Command - slashData must be an object: ${name}`);
+            }
+            if (data.slashData.enabled && typeof data.slashData.enabled !== "boolean") {
+                throw new TypeError(`Command - slashData.enabled must be a boolean: ${name}`);
+            }
+            if (data.slashData.options && !Array.isArray(data.slashData.options)) {
+                throw new TypeError(`Command - slashData.options must be an array: ${name}`);
+            }
+            if (typeof data.slashData?.enabled === "undefined" || data.slashData.enabled) {
+                if (typeof data.onSlashCommand !== "function") {
+                    throw new TypeError(`SubCommand - onSlashCommand must be a function: ${name}`);
+                }
+            }
+        }
     }
 }

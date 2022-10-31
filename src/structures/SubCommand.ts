@@ -30,7 +30,7 @@ export default class SubCommand {
     onSlashCommand: (interaction: ChatInputCommandInteraction) => any;
 
     constructor(data: SubCommandData) {
-        SubCommand.validate(data.name, data);
+        SubCommand._validate(data);
         this.name = data.name;
         this.description = data.description;
         this.prefixData = {
@@ -56,7 +56,9 @@ export default class SubCommand {
         };
     }
 
-    static validate(name: string, data: SubCommandData) {
+    private static _validate(data: SubCommandData) {
+        if (typeof data.name !== "string") throw new TypeError("SubCommand name must be a string.");
+        const { name } = data;
         if (typeof data.description !== "string") {
             throw new TypeError(`SubCommand - description must be a string: ${name}`);
         }
