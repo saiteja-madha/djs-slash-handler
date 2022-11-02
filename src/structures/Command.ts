@@ -1,4 +1,4 @@
-import { ApplicationCommandOptionData, ChatInputCommandInteraction, Message } from "discord.js";
+import { ApplicationCommandOptionData, ChatInputCommandInteraction, Message, PermissionResolvable } from "discord.js";
 import SubCommand from "./SubCommand";
 import SubCommandGroup from "./SubCommandGroup";
 
@@ -14,9 +14,18 @@ type SlashCommandData = {
     options?: ApplicationCommandOptionData[];
 };
 
+type Validation = {
+    callback: (data: ChatInputCommandInteraction | Message) => Promise<boolean>;
+    message: string;
+};
+
 export interface CommandData {
     name: string;
     description: string;
+    cooldown?: number;
+    botPermissions?: PermissionResolvable[];
+    userPermissions?: PermissionResolvable[];
+    validations?: Validation[];
     prefixData?: PrefixCommandData;
     slashData?: SlashCommandData;
     onPrefixCommand?: (message: Message, args: string[]) => any;
@@ -26,8 +35,20 @@ export interface CommandData {
 export default class Command {
     name: string;
     description: string;
-    prefixData: PrefixCommandData;
-    slashData: SlashCommandData;
+    cooldown: number;
+    botPermissions: PermissionResolvable[];
+    userPermissions: PermissionResolvable[];
+    validations: Validation[];
+    prefixData: {
+        enabled: boolean;
+        aliases: string[];
+        usage: string;
+        minArgsCount: number;
+    };
+    slashData: {
+        enabled: boolean;
+        options: ApplicationCommandOptionData[];
+    };
     onPrefixCommand: (message: Message, args: string[]) => any;
     onSlashCommand: (interaction: ChatInputCommandInteraction) => any;
 
@@ -38,6 +59,10 @@ export default class Command {
         Command._validate(data);
         this.name = data.name;
         this.description = data.description;
+        this.cooldown = data.cooldown || 0;
+        this.botPermissions = data.botPermissions || [];
+        this.userPermissions = data.userPermissions || [];
+        this.validations = data.validations || [];
         this.prefixData = {
             enabled: data.prefixData?.enabled === undefined ? true : data.prefixData.enabled,
             aliases: data.prefixData?.aliases || [],
@@ -45,7 +70,7 @@ export default class Command {
             minArgsCount: data.prefixData?.minArgsCount || 0,
         };
         this.slashData = {
-            enabled: data.slashData?.enabled === undefined ? true : data.prefixData?.enabled,
+            enabled: data.slashData?.enabled === undefined ? true : data.slashData.enabled,
             options: data.slashData?.options || [],
         };
         this.onPrefixCommand = data.onPrefixCommand || (() => {});

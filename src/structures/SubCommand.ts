@@ -1,8 +1,7 @@
-import { ChatInputCommandInteraction, ApplicationCommandOptionData, Message } from "discord.js";
+import { ChatInputCommandInteraction, ApplicationCommandOptionData, Message, PermissionResolvable } from "discord.js";
 
 type PrefixCommandData = {
     enabled?: boolean;
-    aliases?: string[];
     usage?: string;
     minArgsCount?: number;
 };
@@ -12,9 +11,18 @@ type SlashCommandData = {
     options?: ApplicationCommandOptionData[];
 };
 
+type Validation = {
+    callback: (data: ChatInputCommandInteraction | Message) => Promise<boolean>;
+    message: string;
+};
+
 export interface SubCommandData {
     name: string;
     description: string;
+    cooldown?: number;
+    botPermissions?: PermissionResolvable[];
+    userPermissions?: PermissionResolvable[];
+    validations?: Validation[];
     prefixData?: PrefixCommandData;
     slashData?: SlashCommandData;
     onPrefixCommand?: (message: Message, args: string[]) => any;
@@ -24,8 +32,19 @@ export interface SubCommandData {
 export default class SubCommand {
     name: string;
     description: string;
-    prefixData: PrefixCommandData;
-    slashData: SlashCommandData;
+    cooldown: number;
+    botPermissions: PermissionResolvable[];
+    userPermissions: PermissionResolvable[];
+    validations: Validation[];
+    prefixData: {
+        enabled: boolean;
+        usage: string;
+        minArgsCount: number;
+    };
+    slashData: {
+        enabled: boolean;
+        options: ApplicationCommandOptionData[];
+    };
     onPrefixCommand: (message: Message, args: string[]) => any;
     onSlashCommand: (interaction: ChatInputCommandInteraction) => any;
 
@@ -33,9 +52,12 @@ export default class SubCommand {
         SubCommand._validate(data);
         this.name = data.name;
         this.description = data.description;
+        this.cooldown = data.cooldown || 0;
+        this.botPermissions = data.botPermissions || [];
+        this.userPermissions = data.userPermissions || [];
+        this.validations = data.validations || [];
         this.prefixData = {
             enabled: data.prefixData?.enabled === undefined ? true : data.prefixData.enabled,
-            aliases: data.prefixData?.aliases || [],
             usage: data.prefixData?.usage || "",
             minArgsCount: data.prefixData?.minArgsCount || 0,
         };
@@ -68,9 +90,6 @@ export default class SubCommand {
         }
         if (data.prefixData?.enabled && typeof data.prefixData.enabled !== "boolean") {
             throw new TypeError(`SubCommand - prefixData.enabled must be a boolean: ${name}`);
-        }
-        if (data.prefixData?.aliases && !Array.isArray(data.prefixData.aliases)) {
-            throw new TypeError(`SubCommand - prefixData.aliases must be an array: ${name}`);
         }
         if (data.prefixData?.usage && typeof data.prefixData.usage !== "string") {
             throw new TypeError(`SubCommand - prefixData.usage must be a string: ${name}`);
