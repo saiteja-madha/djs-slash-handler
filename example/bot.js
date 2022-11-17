@@ -8,8 +8,9 @@ const client = new Discord.Client({
 
 // initialize the command handler
 const cmdHandler = new CommandHandler({
-    path: "commands",
+    commandsDir: "commands",
     disabledCategories: [],
+    defaultPrefix: "!",
 });
 
 client.login("YOUR_BOT_TOKEN").then(() => {
@@ -31,6 +32,6 @@ client.login("YOUR_BOT_TOKEN").then(() => {
 
     client.on("messageCreate", (message) => {
         // handle message
-        cmdHandler.handleMessage(message, "!");
+        cmdHandler.handleMessage(message);
     });
 });

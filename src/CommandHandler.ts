@@ -1,5 +1,5 @@
-import fs from "fs";
-import path from "path";
+import fs from "node:fs";
+import path from "node:path";
 import Command from "./structures/Command";
 import SubCommand from "./structures/SubCommand";
 import SubCommandGroup from "./structures/SubCommandGroup";
@@ -10,6 +10,7 @@ import { permissions, timeFormat } from "./utils";
 type CommandHandlerOptions = {
     commandsDir: string;
     disabledCategories?: string[];
+    defaultPrefix?: string;
 };
 
 interface CommandHandler extends EventEmitter {
@@ -151,7 +152,8 @@ class CommandHandler extends EventEmitter {
         return index !== undefined ? this.commands[index] : undefined;
     }
 
-    getPrefixCommand(message: Message, prefix: string) {
+    getPrefixCommand(message: Message, prefix = this.options.defaultPrefix) {
+        if (!prefix || !message.content.startsWith(prefix)) return { cmd: undefined, sub: undefined, args: [] };
         const args = message.content.slice(prefix.length).trim().split(/ +/g);
         const commandName = args.shift()?.toLowerCase();
 
@@ -337,7 +339,8 @@ class CommandHandler extends EventEmitter {
         }
     }
 
-    async handleMessage(message: Message, prefix: string) {
+    async handleMessage(message: Message, data: any = {}) {
+        const prefix = data && data.prefix ? data.prefix : this.options.defaultPrefix;
         if (message.author.bot || !message.content.startsWith(prefix)) return;
         const { cmd, sub, args } = this.getPrefixCommand(message, prefix);
 
