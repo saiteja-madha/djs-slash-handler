@@ -339,7 +339,8 @@ class CommandHandler extends EventEmitter {
         }
     }
 
-    async handleMessage(message: Message, data: any = {}) {
+    async handleMessage(message: Message, data?: any) {
+        if (typeof data !== "object") throw new Error("Argument data must be an object");
         const prefix = data && data.prefix ? data.prefix : this.options.defaultPrefix;
         if (message.author.bot || !message.content.startsWith(prefix)) return;
         const { cmd, sub, args } = this.getPrefixCommand(message, prefix);
@@ -456,9 +457,9 @@ class CommandHandler extends EventEmitter {
 
             // run command
             if (sub) {
-                await sub.onPrefixCommand(message, args);
+                await sub.onPrefixCommand(message, args, data);
             } else {
-                await cmd.onPrefixCommand(message, args);
+                await cmd.onPrefixCommand(message, args, data);
             }
 
             // cooldown

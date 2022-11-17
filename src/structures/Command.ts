@@ -28,8 +28,8 @@ export interface CommandData {
     validations?: Validation[];
     prefixData?: PrefixCommandData;
     slashData?: SlashCommandData;
-    onPrefixCommand?: (message: Message, args: string[]) => any;
-    onSlashCommand?: (interaction: ChatInputCommandInteraction) => any;
+    onPrefixCommand?: (message: Message, args: string[], data?: any) => any;
+    onSlashCommand?: (interaction: ChatInputCommandInteraction, data?: any) => any;
 }
 
 export default class Command {
@@ -49,8 +49,8 @@ export default class Command {
         enabled: boolean;
         options: ApplicationCommandOptionData[];
     };
-    onPrefixCommand: (message: Message, args: string[]) => any;
-    onSlashCommand: (interaction: ChatInputCommandInteraction) => any;
+    onPrefixCommand: (message: Message, args: string[], data?: any) => any;
+    onSlashCommand: (interaction: ChatInputCommandInteraction, data?: any) => any;
 
     subCommands: SubCommand[] = [];
     subCommandGroups: SubCommandGroup[] = [];

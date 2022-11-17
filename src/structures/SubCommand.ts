@@ -25,8 +25,8 @@ export interface SubCommandData {
     validations?: Validation[];
     prefixData?: PrefixCommandData;
     slashData?: SlashCommandData;
-    onPrefixCommand?: (message: Message, args: string[]) => any;
-    onSlashCommand?: (interaction: ChatInputCommandInteraction) => any;
+    onPrefixCommand?: (message: Message, args: string[], data?: any) => any;
+    onSlashCommand?: (interaction: ChatInputCommandInteraction, data?: any) => any;
 }
 
 export default class SubCommand {
@@ -45,8 +45,8 @@ export default class SubCommand {
         enabled: boolean;
         options: ApplicationCommandOptionData[];
     };
-    onPrefixCommand: (message: Message, args: string[]) => any;
-    onSlashCommand: (interaction: ChatInputCommandInteraction) => any;
+    onPrefixCommand: (message: Message, args: string[], data?: any) => any;
+    onSlashCommand: (interaction: ChatInputCommandInteraction, data?: any) => any;
 
     constructor(data: SubCommandData) {
         SubCommand._validate(data);
